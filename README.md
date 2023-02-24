@@ -13,7 +13,7 @@ jobs:
   add-jira-task-comment:
     runs-on: ubuntu-latest
     steps:
-      - uses: creatrip/jira-task-comment-action@v1
+      - uses: Jonghakseo/add-jira-comment-action@v1
 #        with:
 #          prefix: 'comment prefix'
 #          suffix: 'comment suffix'
