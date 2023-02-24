@@ -1,0 +1,49 @@
+name: 'Add Jira task comment'
+description: 'add a jira task comment'
+
+inputs:
+  prefix:
+    description: 'Comment Body Prefix'
+    required: false
+    default: ''
+  suffix:
+    description: 'Comment Body Suffix'
+    required: false
+    default: ''
+  regexp:
+    description: 'Task Pattern RegExp'
+    required: false
+    default: '(proxy|lan|com|travel)(\\s|-)(\\d+)'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get PR title
+      id: get-pr-title
+      shell: bash
+      run: echo "title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
+
+    - name: Find jira task and make comment body
+      id: find-jira-task
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const taskRegexp = new RegExp(`${{ inputs.regexp }}`, 'gi');
+          const result = `${{ steps.get-pr-title.outputs.title }}`.match(taskRegexp);
+          if(!result){
+            core.notice('Not Found Matched Task Pattern')
+            return;
+          }
+          const jiraURL = 'https://creatrip.atlassian.net/browse/'
+          const taskId = result[0].replace(" ", "-");
+          const commentBody = `${{ inputs.prefix }}[지라 태스크 URL](${jiraURL + taskId})${{ inputs.suffix }}`
+          
+          core.setOutput('body', commentBody)
+
+    - name: Create comment
+      uses: peter-evans/create-or-update-comment@v2
+      if: success() && github.event.number && steps.find-jira-task.outputs.body
+      with:
+        issue-number: ${{ github.event.number }}
+        body: ${{ steps.find-jira-task.outputs.body }}
+
