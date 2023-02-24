@@ -39,11 +39,29 @@ runs:
           const commentBody = `${{ inputs.prefix }}[지라 태스크 URL](${jiraURL + taskId})${{ inputs.suffix }}`
           
           core.setOutput('body', commentBody)
+          core.setOutput('taskId', taskId)
 
-    - name: Create comment
+    - name: Find Comment
+      uses: peter-evans/find-comment@v2
+      if: success() && github.event.number
+      id: fc
+      with:
+        issue-number: ${{ github.event.number }}
+        body-includes: ${{ steps.find-jira-task.outputs.taskId }}
+
+    - name: Create Comment
       uses: peter-evans/create-or-update-comment@v2
-      if: success() && github.event.number && steps.find-jira-task.outputs.body
+      if: success() && github.event.number && steps.fc.outputs.comment-id == 0
       with:
         issue-number: ${{ github.event.number }}
         body: ${{ steps.find-jira-task.outputs.body }}
+
+    - name: Update Comment
+      uses: peter-evans/create-or-update-comment@v2
+      if: success() && github.event.number && steps.fc.outputs.comment-id != 0
+      with:
+        issue-number: ${{ github.event.number }}
+        body: ${{ steps.find-jira-task.outputs.body }}
+        comment-id: ${{ steps.fc.outputs.comment-id }}
+        edit-mode: replace
 
