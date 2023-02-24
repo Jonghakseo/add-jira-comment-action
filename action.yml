@@ -43,7 +43,7 @@ runs:
 
     - name: Find Comment
       uses: peter-evans/find-comment@v2
-      if: success() && github.event.number
+      if: github.event.number && steps.find-jira-task.outputs.body
       id: fc
       with:
         issue-number: ${{ github.event.number }}
@@ -51,14 +51,14 @@ runs:
 
     - name: Create Comment
       uses: peter-evans/create-or-update-comment@v2
-      if: success() && github.event.number && steps.fc.outputs.comment-id == 0
+      if: success() && github.event.number && steps.fc.outputs.comment-id == 0 && steps.find-jira-task.outputs.body
       with:
         issue-number: ${{ github.event.number }}
         body: ${{ steps.find-jira-task.outputs.body }}
 
     - name: Update Comment
       uses: peter-evans/create-or-update-comment@v2
-      if: success() && github.event.number && steps.fc.outputs.comment-id != 0
+      if: success() && github.event.number && steps.fc.outputs.comment-id != 0 && steps.find-jira-task.outputs.body
       with:
         issue-number: ${{ github.event.number }}
         body: ${{ steps.find-jira-task.outputs.body }}
